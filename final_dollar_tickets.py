@@ -1,33 +1,66 @@
-import asyncio
-from playwright.async_api import async_playwright
+import requests
+from datetime import datetime, timedelta
 
-async def find_dollar_tickets():
-    async with async_playwright() as p:
-        browser = await p.chromium.launch(headless=True)
-        page = await browser.new_page()
+# === Configuration ===
+origin = {
+    "name": "Chicago, IL",
+    "id": 100
+}
+start_date = datetime(2025, 5, 1)
+num_days = 5
 
-        await page.goto("https://us.megabus.com")
+headers = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json",
+    "Referer": "https://us.megabus.com"
+}
 
-        # Fill in trip details
-        await page.locator("#searchOriginInput").fill("Chicago, IL")
-        await page.locator("#searchDestinationInput").fill("Omaha, NE")
-        await page.locator("#search-departure-date").fill("05/01/2025")
+def get_destinations(origin_id):
+    url = f"https://us.megabus.com/journey-planner/api/destination-cities?originCityId={origin_id}"
+    response = requests.get(url, headers=headers)
+    if response.status_code != 200:
+        print(f"Failed to fetch destinations (status: {response.status_code})")
+        return []
+    data = response.json()
+    if isinstance(data, dict) and "cities" in data:
+        return [f"{item['name']}||{item['id']}" for item in data["cities"]]
+    elif isinstance(data, list):
+        return [f"{item['name']}||{item['id']}" for item in data]
+    else:
+        print("Unknown response type:", type(data), data)
+        return []
 
-        # Click the Search button
-        await page.locator("button:has-text('Search')").click()
+def check_fares(origin_id, destination_id, date_str):
+    url = "https://us.megabus.com/journey-planner/api/journeys"
+    params = {
+        "originId": origin_id,
+        "destinationId": destination_id,
+        "departureDate": date_str,
+        "concessionCount": 0,
+        "adultCount": 1,
+        "childrenCount": 0,
+        "travelType": "single",
+        "transportType": "bus"
+    }
+    response = requests.get(url, headers=headers, params=params)
+    if response.status_code != 200:
+        return None
+    return response.json()
 
-        # Wait for results to load
-        await page.wait_for_selector(".travel-depart__content", timeout=15000)
+# === Run Script ===
+destinations = get_destinations(origin["id"])
+print(f"Found {len(destinations)} destination cities from {origin['name']}")
+for dest in destinations:
+    dest_name, dest_id = dest.split("||")
+    print(f"{dest_name} (ID: {dest_id})")
 
-        # Scrape prices
-        journey_boxes = await page.locator(".travel-depart__content").all()
-        for box in journey_boxes:
-            text = await box.inner_text()
-            if "$1.00" in text:
-                print("\nFound a $1 ticket!\n")
-                print(text)
-                print("-" * 40)
-
-        await browser.close()
-
-asyncio.run(find_dollar_tickets())
+for i in range(num_days):
+    date_str = (start_date + timedelta(days=i)).strftime("%Y-%m-%d")
+    for dest in destinations:
+        dest_name, dest_id = dest.split("||")
+        data = check_fares(origin["id"], dest_id, date_str)
+        if data and "journeys" in data:
+            for journey in data["journeys"]:
+                if journey.get("price") == 1.0:
+                    print(f"\n$1 fare found: {origin['name']} → {dest_name} on {date_str}")
+                    print(journey)
