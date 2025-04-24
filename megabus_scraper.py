@@ -17,13 +17,9 @@ headers = {
 
 
 start_date = datetime.today().replace(hour=0, minute=0, second=0, microsecond=0)
-end_date = datetime(2025, 5, 13)
+end_date = datetime(2025, 9, 3)
 num_days = (end_date - start_date).days + 1
 search_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in range(num_days)]
-
-
-
-
 
 
 
@@ -38,12 +34,25 @@ search_dates = [(start_date + timedelta(days=i)).strftime("%Y-%m-%d") for i in r
 
 # === ROUTES ===
 # Uncomment to manually test one route (e.g., Abbotsford → Wausau)
-routes = [{
-    "origin": "Abbotsford, WI",
-    "origin_id": 542,
-    "destination": "Wausau, WI",
-    "destination_id": 543,
-}]
+
+# routes = [{
+#     "origin": "Abbotsford, WI",
+#     "origin_id": 542,
+#     "destination": "Wausau, WI",
+#     "destination_id": 543,
+# }]
+
+
+
+routes = [
+    {
+        "origin": "Chicago, IL",
+        "origin_id": 543,
+        "destination": "Omaha, NE",
+        "destination_id": 542
+    },
+    # Add more below
+]
 
 # OR load from file
 
