@@ -31,7 +31,7 @@ import random
 
 # === Configuration ===
 start_date = datetime.now()
-end_date = datetime(2025, 7, 1)
+end_date = datetime(2025, 9, 25)
 headers = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json",
@@ -43,6 +43,22 @@ with open("route_pairs.json", "r") as f:
     all_routes = json.load(f)
 routes = [r for r in all_routes if r["origin"] == "Abbotsford, WI"]
 print(f"Checking destinations from: {routes[0]['origin']}")
+
+
+
+
+#Also checks return routes
+
+
+# return_routes = [r for r in all_routes if r["destination"] == "Abbotsford, WI"]
+# routes = routes + return_routes
+# print(f"Checking all trips involving Abbotsford, WI (outbound and return).")
+
+
+
+
+
+
 
 # Build all (route, date) pairs
 tasks = []
@@ -128,3 +144,4 @@ else:
     print("No $1 tickets were found in the given date range.")
 
 input("\nPress Enter to exit...")
+
